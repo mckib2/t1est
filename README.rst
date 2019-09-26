@@ -2,10 +2,7 @@ T1 fitting
 ----------
 
 Simple T1 fitting.  Uses the following fitting model:
-
-.. math::
-
-    x = A - B \exp{-t/T_1}
+x = A - B \exp{-t/T_1}
 
 where A and B are complex coefficients, t are the inversion times.
 
@@ -38,8 +35,4 @@ The function `t1est()` can be called as follows:
 
 Notice that `x` may be any dimensional, but time points must lie
 along the `time_axis` dimension. If `molli=True`, then T1 is adjusted
-as follows:
-
-.. math::
-
-    T1' = T1 (B/A - 1)
+as follows: T1' = T1 (B/A - 1)
