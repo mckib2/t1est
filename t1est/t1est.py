@@ -43,11 +43,15 @@ def t1est(
 
     # Move time points to the back of the bus
     x = np.moveaxis(x, time_axis, -1)
-
-    # Sanity checks
     TIs = np.array(TIs)
     nt = x.shape[-1]
     sh = x.shape[:-1]
+
+    # If we don't have a mask, just do everything
+    if mask is None:
+        mask = np.ones(sh, dtype=bool)
+
+    # Sanity checks
     assert nt == TIs.size, (
         'Number of inversion times does not match the number of '
         'time frames in x!')
@@ -65,10 +69,6 @@ def t1est(
         bnds = (-np.inf, np.inf)
     else:
         raise NotImplementedError()
-
-    # If we don't have a mask, just do everything
-    if mask is None:
-        mask = np.ones(sh, dtype=bool)
 
     # Parallelize this thing!
     ntot = np.prod(sh)
