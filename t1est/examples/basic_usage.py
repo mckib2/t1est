@@ -24,7 +24,7 @@ if __name__ == '__main__':
     T1map = t1est(
         ph, TIs, time_axis=-1, mask=mask, method='lm',
         T1_bnds=(np.min(T1.flatten()), np.max(T1.flatten())),
-        chunksize=10, molli=False)
+        chunksize=10, molli=False, mag=False)
 
     # Check it out
     nx, ny = 1, 3
