@@ -34,7 +34,7 @@ The function `t1est()` can be called as follows:
     # inversion times are provided as TIs
     T1map = t1est(
         x, TIs, time_axis=-1, mask=mask, method='trf', T1_bnds=(0, 3),
-        chunksize=10, molli=True)
+        chunksize=10, molli=True, mag=True)
 
 Notice that `x` may be any-dimensional, but time points must lie
 along the `time_axis` dimension. If `molli=True`, then T1 is adjusted
