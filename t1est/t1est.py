@@ -127,7 +127,7 @@ def _fit(y, t, method, bnds, molli, mag, x0):
         obj = _magobj
         # Find zero-crossing and give correct sign
         midx = np.argmin(y)
-        y[:midx+1] = -1*y[:midx+1]
+        y[:midx] = -1*y[:midx]
 
     res_lsq = least_squares(
         obj, x0, args=(t, y), method=method, bounds=bnds)
