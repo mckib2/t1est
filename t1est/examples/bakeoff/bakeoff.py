@@ -15,10 +15,10 @@ from .loader import loader
 
 def run(
         TIs, ims, truth, mask, method, chunksize=50, filename=None,
-        show=True):
+        show=True, force=False):
     '''Run a dataset.'''
 
-    if not isfile(filename + '.npz'):
+    if not isfile(filename + '.npz') or force:
         T1map = t1est(
             ims, TIs, time_axis=-1, mask=mask, method=method,
             T1_bnds=(0, 5), chunksize=chunksize, molli=True, mag=True)
@@ -86,10 +86,32 @@ def find_colorbar(idx):
 
 if __name__ == '__main__':
 
+    # num_pts = 8
+    num_pts = 5
+
     for idx in range(16):
 
         print('STARTING %d' % idx)
         TIs, ims, truth, name = loader(idx)
+
+        # Pop images off of the front until we have the ones we want
+        if ims.shape[-1] > num_pts:
+            nt = ims.shape[-1]
+            # step = int(np.ceil(nt/num_pts))
+            # ind = [ii for ii in range(0, nt, step)]
+            # if len(ind) == num_pts-1:
+            #     ind.insert(int(len(ind)/2), int(nt/2)-1)
+            # print(ind)
+            # ims = ims[..., ind]
+            # TIs = TIs[ind]
+            # print(ims.shape, TIs.shape)
+
+            # Use first 5 time points
+            ind = [ii for ii in range(num_pts)]
+            ims = ims[..., ind]
+            TIs = TIs[ind]
+            print(ims.shape, TIs.shape)
+
 
         t0 = time()
         sos = np.sqrt(np.sum(np.abs(ims)**2, axis=-1))
@@ -105,7 +127,8 @@ if __name__ == '__main__':
 
         run(
             TIs, ims, truth, mask, method='lm', chunksize=50,
-            filename='data/results/lm_%s' % name, show=False)
+            filename='data/results/lm_first_t%d_%s' % (num_pts, name),
+            show=False, force=False)
 
         # run(
         #     TIs, ims, truth, mask, method='trf', chunksize=20,
