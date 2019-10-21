@@ -129,8 +129,10 @@ def _fit(y, t, method, bnds, molli, mag, x0):
         midx = np.argmin(y)
         y[:midx] = -1*y[:midx]
 
+    old_settings = np.seterr(over='ignore')
     res_lsq = least_squares(
         obj, x0, args=(t, y), method=method, bounds=bnds)
+    np.seterr(**old_settings)
 
     if mag:
         A, B, T1 = res_lsq['x'][:]
