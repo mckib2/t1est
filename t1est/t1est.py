@@ -61,7 +61,7 @@ def t1est(
 
     # Get bounds and initial guess for least squares solver
     if mag:
-        x0 = np.ones(3)
+        x0 = np.array([1, 2, 1]) # better A, B initial estimates
     else:
         x0 = np.ones(5)
     if method == 'trf':
@@ -107,7 +107,7 @@ def _model(Ar, Ai, Br, Bi, T1, TI):
 
 def _magmodel(A, B, T1, TI):
     '''T1 fitting model with real coefficients.'''
-    return A - B*np.exp(-TI/T1)
+    return np.abs(A - B*np.exp(-TI/T1))
 
 def _obj(x, t, y):
     '''Function for least squares fitting'''
@@ -117,7 +117,7 @@ def _obj(x, t, y):
 def _magobj(x, t, y):
     '''Function for least squares fitting assuming magnitude data.'''
     A, B, T1 = x[:]
-    return _magmodel(A, B, T1, t) - y
+    return np.abs(_magmodel(A, B, T1, t) - y)
 
 def _fit(y, t, method, bnds, molli, mag, x0):
     '''Do T1 fitting'''
@@ -125,9 +125,6 @@ def _fit(y, t, method, bnds, molli, mag, x0):
     obj = _obj
     if mag:
         obj = _magobj
-        # Find zero-crossing and give correct sign
-        midx = np.argmin(y)
-        y[:midx] = -1*y[:midx]
 
     old_settings = np.seterr(over='ignore')
     res_lsq = least_squares(
