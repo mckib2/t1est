@@ -18,10 +18,13 @@ Should be as easy as:
 Usage
 -----
 
-Run examples as follows:
+Examples are in the examples modules.  They can be run as follows:
 
 .. code-block:: python
 
+    python -m t1est.examples.[name of example]
+
+    # For example:
     python -m t1est.examples.basic_usage
 
 The function `t1est()` can be called as follows:
