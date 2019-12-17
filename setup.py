@@ -15,10 +15,10 @@ setup(
     description='Basic T1 fitting',
     long_description=open('README.rst').read(),
     install_requires=[
-        "numpy>=1.17.2",
-        "matplotlib>=3.1.1",
-        "phantominator>=0.4.3",
-        "tqdm>=4.36.1",
+        "numpy>=1.17.4",
+        "matplotlib>=3.1.2",
+        "phantominator>=0.4.5",
+        "tqdm>=4.40.2",
     ],
     python_requires='>=3.6',
 )
