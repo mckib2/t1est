@@ -4,9 +4,13 @@ import logging
 
 import numpy as np
 
+def _do_phase_correction(x):
+    '''Correct phase.'''
+    return x
+
 def t1iter(
         x, t, T10=1, A0=1, B0=-2, time_axis=-1, alpha=1, tol=1e-4,
-        maxiter=100):
+        maxiter=100, molli=False):
     '''Try an iterative approach.
 
     Parameters
@@ -25,6 +29,8 @@ def t1iter(
         Break out of loop when abs(dT1) is below tol.
     maxiter : int, optional
         The maximum number of iterations to perform.
+    molli : bool, optional
+        Do MOLLI correction.
 
     Returns
     -------
@@ -45,9 +51,8 @@ def t1iter(
     t1est.t1est().
     '''
 
-    assert x.ndim == 3, 'x should have xy+t dimensions!'
-
     # Put time in the back
+    assert x.ndim == 3, 'x should have xy+t dimensions!'
     x = np.moveaxis(x, time_axis, -1)
 
     # Do some sanity checks
@@ -64,6 +69,9 @@ def t1iter(
     else:
         B0 = np.ones(x.shape[:-1])*B0
 
+    # Do phase correction so we can do a phase sensitive recon
+    x = _do_phase_correction(x)
+
     # Initialize estimates
     T1, A, B = T10, A0, B0
     N = len(t)
@@ -79,7 +87,7 @@ def t1iter(
         B = np.sum(etT1*(x - A[..., None]), axis=-1)/np.sum(
             np.exp(-2*t[None, None, :]/T1[..., None]), axis=-1)
 
-        # Do an update step for T1
+        # Do a gradient descent update step for T1
         dT1 = np.sum(
             -2*B[..., None]*t[None, None, :]*etT1*(
                 x - A[..., None] - B[..., None]*etT1),
@@ -97,6 +105,10 @@ def t1iter(
         logging.warning(
             'Maximum number of iterations was reached! '
             'Estimate not within tol!')
+
+    if molli:
+        logging.info('Doing MOLLI correction!')
+        T1 = T1*(B/A - 1)
 
     return(T1, A, B, ii, dT1s)
 

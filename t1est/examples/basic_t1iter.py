@@ -44,7 +44,7 @@ if __name__ == '__main__':
     t0 = time()
     T1_est, A_est, B_est, niter, err = t1iter(
         ph, TIs, T10=1, A0=1, B0=-2, time_axis=-1, alpha=1.75,
-        tol=1e-5, maxiter=1000)
+        tol=1e-5, maxiter=1000, molli=False)
     print('Took %d iters in %g sec' % (niter, time() - t0))
 
     # Look at error
