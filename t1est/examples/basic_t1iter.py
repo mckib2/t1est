@@ -10,21 +10,6 @@ from phantominator import shepp_logan
 
 from t1est import t1iter
 
-# def _show_result(T1, A, B, T1_est, A_est, B_est, niter, time_elapsed):
-#     print('Took %g sec and %d iterations' % (time_elapsed, niter))
-#     print('    True T1: %g' % T1)
-#     print('     est T1: %g' % T1_est)
-#     print('     True A: %g' % A)
-#     print('      est A: %g' % A_est)
-#     print('     True B: %g' % B)
-#     print('      est B: %g' % B_est)
-#
-#     plt.plot(err)
-#     plt.title('dT1 vs iteration')
-#     plt.xlabel('Iteration')
-#     plt.ylabel('Change in T1 estimate')
-#     plt.show()
-
 if __name__ == '__main__':
 
     # Make a simple Shepp-Logan MR phantom
