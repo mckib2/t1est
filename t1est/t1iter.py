@@ -68,7 +68,10 @@ def t1iter(
         B0 = np.ones(x.shape[:-1])*B0
 
     # Do phase correction so we can do a phase sensitive recon
-    x = _phase_correction(x)
+    if np.iscomplexobj(x):
+        logging.info(
+            'Doing phase correction for complex-valued input')
+        x = _phase_correction(x)
 
     # Initialize estimates
     T1, A, B = T10, A0, B0
