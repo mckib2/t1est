@@ -4,9 +4,7 @@ import logging
 
 import numpy as np
 
-def _do_phase_correction(x):
-    '''Correct phase.'''
-    return x
+from .phase_correction import _phase_correction
 
 def t1iter(
         x, t, T10=1, A0=1, B0=-2, time_axis=-1, alpha=1, tol=1e-4,
@@ -70,7 +68,7 @@ def t1iter(
         B0 = np.ones(x.shape[:-1])*B0
 
     # Do phase correction so we can do a phase sensitive recon
-    x = _do_phase_correction(x)
+    x = _phase_correction(x)
 
     # Initialize estimates
     T1, A, B = T10, A0, B0
