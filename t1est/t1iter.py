@@ -3,12 +3,13 @@
 import logging
 
 import numpy as np
+from tqdm import tqdm
 
 from .phase_correction import _phase_correction
 
 def t1iter(
-        x, t, T10=1, A0=1, B0=-2, time_axis=-1, alpha=1, tol=1e-4,
-        maxiter=100, molli=False):
+        x, t, mask=None, T10=1, A0=1, B0=-2, time_axis=-1, alpha=1,
+        tol=1e-4, maxiter=100, molli=False):
     '''Try an iterative approach.
 
     Parameters
@@ -17,6 +18,8 @@ def t1iter(
         Measurements of the inversion recovery signal.
     t : array_like
         Inversion times (in sec).
+    mask : array_like or None, optional
+        Location of pixels to do mapping.
     T10, A0, B0 : floats or array_like, optional
         Initial estimates for T1 (in sec), A, and B.
     time_axis : int, optional
@@ -36,8 +39,9 @@ def t1iter(
         Estimates for parameters of signal equation.
     niter
         Number of iterations actually evaluated.
-    err
-        The derivative updates for T1 as a function of iteration.
+    norms
+        The norm of derivative updates for T1 as a function of
+        iteration.
 
     Notes
     -----
@@ -78,40 +82,98 @@ def t1iter(
     N = len(t)
     ii = 0
 
-    dT1s = np.zeros(maxiter)
-    amaxdT1 = np.inf
-    while amaxdT1 > tol and ii < maxiter:
+    # Only do the vales we need
+    if mask is not None:
+        orig_shape = x.shape[:]
+        x = np.reshape(x, (-1, x.shape[-1]))
 
-        # Least squares update for A, B
-        etT1 = np.exp(-t[None, None, :]/T1[..., None])
-        A = 1/N*np.sum(x - B[..., None]*etT1, axis=-1)
-        B = np.sum(etT1*(x - A[..., None]), axis=-1)/np.sum(
-            np.exp(-2*t[None, None, :]/T1[..., None]), axis=-1)
+        # Get only pixels in mask
+        mask = mask.flatten()
+        x = x[mask, :]
+        T1 = T1.flatten()[mask][None, :]
+        A = A.flatten()[mask][None, :]
+        B = B.flatten()[mask][None, :]
+
+        # Do for initial estimates just in case
+        A0 = A0.flatten()[mask][None, :]
+        B0 = B0.flatten()[mask][None, :]
+
+    # Normalize data
+    x /= np.linalg.norm(x)
+
+    # Do the iterative recon:
+    norms = np.zeros(maxiter)
+    norm = np.inf
+    pbar = tqdm(total=maxiter, leave=False)
+    np.seterr(over='raise', divide='raise')
+    while norm > tol and ii < maxiter:
+
+        try:
+            # Compute common vale
+            etT1 = np.exp(-t[None, None, :]/T1[..., None])
+
+            # Least squares update for A, B
+            A = 1/N*np.sum(x - B[..., None]*etT1, axis=-1)
+
+            B = np.sum(etT1*(x - A[..., None]), axis=-1)/np.sum(
+                np.exp(-2*t[None, None, :]/T1[..., None]), axis=-1)
+
+        except FloatingPointError:
+            logging.warning('Overflow error! Breaking out early!')
+            T1 = np.nan_to_num(T1)
+            A = np.nan_to_num(A)
+            B = np.nan_to_num(B)
+            break
 
         # Do a gradient descent update step for T1
         dT1 = np.sum(
             -2*B[..., None]*t[None, None, :]*etT1*(
                 x - A[..., None] - B[..., None]*etT1),
             axis=-1)/T1**2
-        amaxdT1 = np.max(np.abs(dT1))
-        dT1s[ii] = amaxdT1
+        dT1[np.abs(dT1) > 10] = 10 # remove ridiculous values
+        dT1 = np.nan_to_num(dT1)
+        norm = np.linalg.norm(dT1)
+        dT1 /= norm
         T1 -= alpha*dT1
 
-        ii += 1
+        # remember stopping condition:
+        norms[ii] = norm
 
-    # Remove unused entries in dT1s
+        ii += 1
+        pbar.update(1)
+    pbar.close()
+
+    # Remove unused entries in norms
     if ii < maxiter:
-        dT1s = dT1s[..., :ii]
+        norms = norms[..., :ii]
     else:
         logging.warning(
             'Maximum number of iterations was reached! '
             'Estimate not within tol!')
 
+    # Do the MOLLI correction if user asked for it
     if molli:
         logging.info('Doing MOLLI correction!')
-        T1 = T1*(B/A - 1)
+        T1 = T1*(np.abs(B/A) - 1)
 
-    return(T1, A, B, ii, dT1s)
+    # Move data back from masked shape
+    if mask is not None:
+        tmp = np.zeros(np.prod(orig_shape[:-1]))
+        tmp[mask] = T1.squeeze()
+        T1 = tmp
+        T1 = np.reshape(T1, orig_shape[:-1])
+
+        tmp = np.zeros(np.prod(orig_shape[:-1]))
+        tmp[mask] = A.squeeze()
+        A = tmp
+        A = np.reshape(A, orig_shape[:-1])
+
+        tmp = np.zeros(np.prod(orig_shape[:-1]))
+        tmp[mask] = B.squeeze()
+        B = tmp
+        B = np.reshape(B, orig_shape[:-1])
+
+    return(T1, A, B, ii, norms)
 
 if  __name__ == '__main__':
     pass
